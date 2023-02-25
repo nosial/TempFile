@@ -1,0 +1,42 @@
+{
+    "project": {
+        "compiler": {
+            "extension": "php",
+            "minimum_version": "8.0",
+            "maximum_version": "8.2"
+        },
+        "options": []
+    },
+    "assembly": {
+        "name": "TempFile",
+        "package": "net.nosial.tempfile",
+        "version": "1.0.0",
+        "uuid": "910f98fe-b4c9-11ed-b13f-fdc283a6db6d"
+    },
+    "build": {
+        "source_path": "src",
+        "default_configuration": "debug",
+        "define_constants": {
+            "ASSEMBLY_NAME": "%ASSEMBLY.NAME%",
+            "ASSEMBLY_PACKAGE": "%ASSEMBLY.PACKAGE%",
+            "ASSEMBLY_VERSION": "%ASSEMBLY.VERSION%",
+            "ASSEMBLY_UID": "%ASSEMBLY.UID%"
+        },
+        "configurations": [
+            {
+                "name": "debug",
+                "output_path": "build/debug",
+                "define_constants": {
+                    "DEBUG": "1"
+                }
+            },
+            {
+                "name": "release",
+                "output_path": "build/release",
+                "define_constants": {
+                    "DEBUG": "0"
+                }
+            }
+        ]
+    }
+}
