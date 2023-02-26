@@ -5,6 +5,7 @@
     namespace TempFile;
 
     use Exception;
+    use InvalidArgumentException;
     use ncc\Runtime;
 
     class TempFile
@@ -24,13 +25,6 @@
         private static $shutdown_handler_registered = false;
 
         /**
-         * The extension of the temporary file
-         *
-         * @var string
-         */
-        private $extension;
-
-        /**
          * @var string
          */
         private $filename;
@@ -41,21 +35,60 @@
         private $filepath;
 
         /**
-         * Create a new temporary file with a given extension (default: tmp)
+         * Create a new temporary file with optional options:
+         *  - extension: The extension of the file
+         *  - filename: The filename of the file
+         *  - prefix: The prefix of the file name
+         *  - suffix: The suffix of the file name
          *
-         * @param string|null $extension
+         * @param array|null $options
          * @throws Exception
          */
-        public function __construct(?string $extension=null)
+        public function __construct(?array $options=[])
         {
-            if($extension === null)
+            /** @var string|int $value */
+            foreach($options as $option => $value)
             {
-                $extension = 'tmp';
+                if(!is_string($value) && !is_int($value))
+                    throw new InvalidArgumentException(sprintf('The value for option %s must be a string or int, got %s', $option, gettype($value)));
+                if(!in_array($option, Options::All))
+                    throw new InvalidArgumentException(sprintf('The option %s is not valid', $option));
             }
 
-            $this->extension = ltrim($extension, '.');
-            $this->filename = $this->randomString() . '.' . $this->extension;
-            $this->filepath = $this->getTempDir() . DIRECTORY_SEPARATOR . $this->filename;
+            if(!isset($options[Options::Extension]))
+                $options[Options::Extension] = 'tmp';
+            if(!isset($options[Options::RandomLength]))
+                $options[Options::RandomLength] = 8;
+
+            if(isset($options[Options::Filename]))
+            {
+                $this->filename = $options[Options::Filename];
+            }
+            else
+            {
+                $this->filename = self::randomString((int)$options[Options::RandomLength]);
+            }
+
+            if(isset($options[Options::Prefix]))
+                $this->filename = $options[Options::Prefix] . $this->filename;
+            if(isset($options[Options::Suffix]))
+                $this->filename = $this->filename . $options[Options::Suffix];
+            $this->filename .= '.' . $options[Options::Extension];
+            $this->filename = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $this->filename);
+
+            if(isset($options[Options::Directory]))
+            {
+                if(!file_exists($options[Options::Directory]) || !is_dir($options[Options::Directory]))
+                    throw new InvalidArgumentException(sprintf('The directory %s does not exist or is not a a valid path', $options[Options::Directory]));
+                if(!is_writable($options[Options::Directory]))
+                    throw new InvalidArgumentException(sprintf('The directory %s is not writable', $options[Options::Directory]));
+
+                $this->filepath = $options[Options::Directory] . DIRECTORY_SEPARATOR . $this->filename;
+            }
+            else
+            {
+                $this->filepath = self::getTempDir() . DIRECTORY_SEPARATOR . $this->filename;
+            }
 
             if(!file_exists($this->filepath))
             {
@@ -79,14 +112,15 @@
         /**
          * Generates a random string of a given length
          *
+         * @param int $length
          * @return string
          */
-        private function randomString(): string
+        private static function randomString(int $length=8): string
         {
             $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
             $charactersLength = strlen($characters);
             $randomString = '';
-            for ($i = 0; $i < 32; $i++)
+            for ($i = 0; $i < $length; $i++)
             {
                 $randomString .= $characters[rand(0, $charactersLength - 1)];
             }
@@ -99,7 +133,7 @@
          * @return string
          * @throws Exception
          */
-        private function getTempDir(): string
+        private  static function getTempDir(): string
         {
             if(function_exists('sys_get_temp_dir'))
             {

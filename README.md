@@ -3,6 +3,18 @@
 TempFile is a very simple library used for creating temporary files without having to write code to delete them
 once you're done with them.
 
+## Table of Contents
+
+<!-- TOC -->
+* [TempFile](#tempfile)
+  * [Table of Contents](#table-of-contents)
+  * [Installation](#installation)
+  * [Compiling from source](#compiling-from-source)
+  * [Usage](#usage)
+    * [Options](#options)
+  * [License](#license)
+<!-- TOC -->
+
 ## Installation
 
 The library can be installed using ncc:
@@ -44,15 +56,20 @@ make release
 
 ## Usage
 
-Just create a class object, optionally specifying a file extension to use (without the dot). And that's all, an
-Exception will be thrown if the file could not be created.
+Just create a class object, optionally specifying options you'd like to use.
 
 ```php
 require_once('ncc');
 import('net.nosial.tempfile');
 
-$file1 = new TempFile();
-$file2 = new TempFile('txt');
+$file1 = new TempFile\TempFile();
+$file2 = new TempFile\TempFile([
+    TempFile\Options::Extension => 'txt',
+    TempFile\Options::Prefix => 'prefix_',
+    TempFile\Options::Suffix => '_suffix',
+    TempFile\Options::RandomLength => 8,
+    TempFile\Options::Directory => '/tmp',
+]);
 ```
 
 You can obtain the file path by using the `getFilepath()` method or by using the object as a string.
@@ -65,6 +82,17 @@ file_put_contents($file2, 'Hello World!');
 Files are automatically deleted when the object is destroyed, if for some reason the __destruct() method was not
 properly called, a shutdown function is automatically registered to delete all the temporary files that were
 created.
+
+### Options
+
+The following options are available:
+
+ - `TempFile\Options::Extension` - The file extension to use, defaults to 'tmp',
+ - `TempFile\Options::Prefix` - The prefix to use for the file name, empty by default,
+ - `TempFile\Options::Suffix` - The suffix to use for the file name, empty by default,
+ - `TempFile\Options::RandomLength` - The length of the random string to use for the file name, defaults to 16,
+ - `TempFile\Options::Directory` - The directory to create the file in, defaults to the system's temporary directory.
+ - `TempFile\Options::Filename` - The filename to use, if specified, the random string will not be used.
 
 ## License
 

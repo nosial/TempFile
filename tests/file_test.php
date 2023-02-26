@@ -3,7 +3,10 @@
     require 'ncc';
     import('net.nosial.tempfile');
 
-    $temp = new \TempFile\TempFile('bin');
+    $temp = new \TempFile\TempFile([
+        \TempFile\Options::Extension => 'txt',
+        \TempFile\Options::Filename => 'test',
+    ]);
     print(sprintf('Tempfile: %s', $temp->getFilepath()) . PHP_EOL);
 
     file_put_contents($temp, 'Hello, world!');
