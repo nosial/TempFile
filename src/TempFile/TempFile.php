@@ -1,7 +1,5 @@
 <?php
 
-    /** @noinspection PhpMissingFieldTypeInspection */
-
     namespace TempFile;
 
     use Exception;
@@ -17,24 +15,24 @@
          *
          * @var string[]
          */
-        private static $temporary_files = [];
+        private static array $temporary_files = [];
 
         /**
          * Indicates whether the shutdown handler has been registered
          *
          * @var bool
          */
-        private static $shutdown_handler_registered = false;
+        private static bool $shutdown_handler_registered = false;
 
         /**
          * @var string
          */
-        private $filename;
+        private string $filename;
 
         /**
          * @var string
          */
-        private $filepath;
+        private string $filepath;
 
         /**
          * Create a new temporary file with optional options:
@@ -92,7 +90,19 @@
             }
 
             $this->filename .= '.' . $options[Options::Extension];
-            $this->filename = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $this->filename);
+            $replaced = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $this->filename);
+
+            if($replaced === false)
+            {
+                throw new InvalidArgumentException('The filename contains invalid characters');
+            }
+
+            if(is_array($replaced))
+            {
+                $replaced = implode('', $replaced);
+            }
+
+            $this->filename = $replaced;
 
             if(isset($options[Options::Directory]))
             {
