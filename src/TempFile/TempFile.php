@@ -6,10 +6,12 @@
 
     use Exception;
     use InvalidArgumentException;
-    use ncc\Runtime;
+    use RuntimeException;
 
     class TempFile
     {
+        private const string RANDOM_CHARACTERS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
         /**
          * An array of temporary files to be deleted on shutdown
          *
@@ -50,15 +52,25 @@
             foreach($options as $option => $value)
             {
                 if(!is_string($value) && !is_int($value))
+                {
                     throw new InvalidArgumentException(sprintf('The value for option %s must be a string or int, got %s', $option, gettype($value)));
+                }
+
                 if(!in_array($option, Options::All))
+                {
                     throw new InvalidArgumentException(sprintf('The option %s is not valid', $option));
+                }
             }
 
             if(!isset($options[Options::Extension]))
+            {
                 $options[Options::Extension] = 'tmp';
+            }
+
             if(!isset($options[Options::RandomLength]))
+            {
                 $options[Options::RandomLength] = 8;
+            }
 
             if(isset($options[Options::Filename]))
             {
@@ -70,18 +82,28 @@
             }
 
             if(isset($options[Options::Prefix]))
+            {
                 $this->filename = $options[Options::Prefix] . $this->filename;
+            }
+
             if(isset($options[Options::Suffix]))
+            {
                 $this->filename = $this->filename . $options[Options::Suffix];
+            }
+
             $this->filename .= '.' . $options[Options::Extension];
             $this->filename = preg_replace('/[^a-zA-Z0-9.\-_]/', '', $this->filename);
 
             if(isset($options[Options::Directory]))
             {
                 if(!file_exists($options[Options::Directory]) || !is_dir($options[Options::Directory]))
+                {
                     throw new InvalidArgumentException(sprintf('The directory %s does not exist or is not a a valid path', $options[Options::Directory]));
+                }
                 if(!is_writable($options[Options::Directory]))
+                {
                     throw new InvalidArgumentException(sprintf('The directory %s is not writable', $options[Options::Directory]));
+                }
 
                 $this->filepath = $options[Options::Directory] . DIRECTORY_SEPARATOR . $this->filename;
             }
@@ -101,7 +123,6 @@
             }
 
             self::$temporary_files[] = $this->filepath;
-
             if(!self::$shutdown_handler_registered && function_exists('register_shutdown_function'))
             {
                 register_shutdown_function([self::class, 'shutdownHandler']);
@@ -117,13 +138,14 @@
          */
         private static function randomString(int $length=8): string
         {
-            $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            $charactersLength = strlen($characters);
+            $charactersLength = strlen(self::RANDOM_CHARACTERS);
             $randomString = '';
+
             for ($i = 0; $i < $length; $i++)
             {
-                $randomString .= $characters[rand(0, $charactersLength - 1)];
+                $randomString .= self::RANDOM_CHARACTERS[rand(0, $charactersLength - 1)];
             }
+
             return $randomString;
         }
 
@@ -153,15 +175,6 @@
                 }
             }
 
-            try
-            {
-               return Runtime::getDataPath('net.nosial.tempfile');
-            }
-            catch(Exception $e)
-            {
-                unset($e);
-            }
-
             $local_tmp = getcwd() . DIRECTORY_SEPARATOR . 'temp';
 
             if(is_writeable(getcwd()))
@@ -174,7 +187,7 @@
                 return $local_tmp;
             }
 
-            throw new Exception('Unable to find a suitable temporary directory');
+            throw new RuntimeException('Unable to find a suitable temporary directory');
         }
 
         /**
