@@ -1,8 +1,23 @@
-release:
-	ncc build --config="release"
+# Variables
+CONFIG ?= release
+LOG_LEVEL = debug
+OUTDIR = build/$(CONFIG)
+PACKAGE = $(OUTDIR)/net.nosial.tempfile.ncc
 
-install:
-	ncc package install --package="build/release/net.nosial.tempfile.ncc" --skip-dependencies --reinstall -y
+# Default Target
+all: build
 
-uninstall:
-	ncc package uninstall -y --package="net.nosial.tempfile"
+# Build Steps
+build:
+	ncc build --config=$(CONFIG) --log-level $(LOG_LEVEL)
+
+install: build
+	ncc package install --package=$(PACKAGE) --skip-dependencies --build-source --reinstall -y --log-level $(LOG_LEVEL)
+
+test: build
+	phpunit
+
+clean:
+	rm -rf build
+
+.PHONY: all build install test clean
